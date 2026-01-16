@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { PI } from 'three/tsl';
 
 /**
  * Classe pour générer des plantes et arbres avec les L-Systems
@@ -328,7 +329,7 @@ export const VegetationPresets = {
   largeTree: {
     axiom: 'FFF',
     rules: { 
-      'F': 'FF[+F][-F][&F][^F]',
+      'F': 'F[+F][-F][&F]',
     },
     iterations: 5,
     angle: 28,
@@ -411,7 +412,7 @@ export class VegetationManager {
    */
   populate(config = {}) {
     const {
-      numTrees = 100,
+      numTrees = 300,
       numBushes = 150,
       numGrass = 300,
       numFlowers = 200,
@@ -422,19 +423,40 @@ export class VegetationManager {
     this.clear();
 
     // Arbres
-    for (let i = 0; i < numTrees; i++) {
-      const position = this.getRandomPlainsPosition(minDistanceFromMountains);
-      if (position) {
+    // for (let i = 0; i < numTrees; i++) {
+    //   const position = this.getForestCenter(minDistanceFromMountains);
+    //   if (position) {
+    //     const tree = this.createRandomTree();
+    //     tree.position.copy(position);
+        
+    //     // Rotation aléatoire
+    //     tree.rotation.y = Math.random() * Math.PI * 2;
+        
+    //     // Variation de taille
+    //     const scale = 0.8 + Math.random() * 0.4;
+    //     tree.scale.set(scale, scale, scale);
+        
+    //     this.scene.add(tree);
+    //     this.vegetation.push(tree);
+    //   }
+    // }
+    // ===== FORÊTS =====
+    const numForests = Math.floor(numTrees / 20); // ex: 5 forêts
+    const treesPerForest = 500;
+    const forestRadius = 100; // PLUS PETIT = PLUS DENSE 🌲🌲🌲
+
+    for (let i = 0; i < numForests; i++) {
+      const treePositions = this.generateForest(treesPerForest, forestRadius);
+
+      for (const position of treePositions) {
         const tree = this.createRandomTree();
         tree.position.copy(position);
-        
-        // Rotation aléatoire
+
         tree.rotation.y = Math.random() * Math.PI * 2;
-        
-        // Variation de taille
+
         const scale = 0.8 + Math.random() * 0.4;
         tree.scale.set(scale, scale, scale);
-        
+
         this.scene.add(tree);
         this.vegetation.push(tree);
       }
@@ -442,7 +464,9 @@ export class VegetationManager {
 
     // Buissons
     for (let i = 0; i < numBushes; i++) {
-      const position = this.getRandomPlainsPosition(minDistanceFromMountains);
+      const treeCount = 30;
+      const radius = 5;
+      const position = this.generateForest(treeCount, radius);
       if (position) {
         const bush = this.createBush();
         bush.position.copy(position);
@@ -518,6 +542,33 @@ export class VegetationManager {
     }
 
     return null; // Impossible de trouver une position valide
+  }
+
+
+  generateForest(treeCount, radius) {
+    const minDistanceFromMountains = 10;
+    const center = this.getRandomPlainsPosition(minDistanceFromMountains);
+    if (!center) return [];
+  
+    const trees = [];
+  
+    for (let i = 0; i < treeCount; i++) {
+      // Offset très faible → arbres proches
+      const offsetX = (Math.random() - 0.5) * radius;
+      const offsetZ = (Math.random() - 0.5) * radius;
+      const angle = (Math.random()*Math.PI);
+  
+      const x = center.x + offsetX*Math.cos(angle);
+      const z = center.z + offsetZ*Math.sin(angle);
+  
+      // Sécurité : rester en plaines
+      if (this.terrainGenerator.getBiomeAt(x, z) !== 'plains') continue;
+  
+      const y = this.terrainGenerator.getHeightAt(x, z);
+      trees.push(new THREE.Vector3(x, y, z));
+    }
+  
+    return trees;
   }
 
   /**
