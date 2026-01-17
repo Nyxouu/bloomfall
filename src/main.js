@@ -4,6 +4,12 @@ import { TerrainGenerator, createBloomfallTerrain } from './world/TerrainGenerat
 import { VegetationManager } from './world/entities/systems/lsystem/lsystem.js'
 import { BoidsSystem, CreaturePresets } from './world/entities/boids/boidSystem.js';
 import { CreatureSystem } from './world/entities/neuralnetwork/CreatureSystem.js';
+import { GLTFLoader } from 'three/examples/jsm/Addons.js';
+
+
+
+
+
 
 /**
  * Configuration de la scène Bloomfall
@@ -27,7 +33,33 @@ class BloomfallScene {
 
     this.init();
     this.animate();
+
+    spawnFlowers(count);
   }
+
+  spawnFlowers(count) {
+    const minDistanceFromMountains = 20;
+    if (!this.flowerModel) return;
+  
+    for (let i = 0; i < count; i++) {
+      const flower = this.flowerModel.clone(true);
+  
+      // Position aléatoire sur le terrain
+      const position = this.vegetationManager.getRandomPlainsPosition(minDistanceFromMountains);
+      flower.position.copy(position);
+  
+      // Rotation aléatoire
+      flower.rotation.y = Math.random() * Math.PI * 2;
+  
+      // Légère variation de taille
+      const scale = 0.08 + Math.random() * 0.04;
+      flower.scale.set(scale, scale, scale);
+  
+      this.scene.add(flower);
+    }
+  }
+  
+  
 
   init() {
     // 1. Initialisation Scène de base
@@ -89,6 +121,29 @@ class BloomfallScene {
     window.addEventListener('resize', () => this.onWindowResize());
     this.displayTerrainInfo();
     this.createControlsUI(); // Bouton pour l'évolution
+
+    // const gltfLoader = new GLTFLoader();
+    // gltfLoader.load('/flowers/scene.gltf', (gltfScene) => {
+    //   gltfScene.scene.scale.set(0.1, 0.1, 0.1);
+    //   gltfScene.scene.position.set(0, 0, 0.5);
+    //   this.scene.add(gltfScene.scene);
+
+    //   console.log('Modèle chargé:', gltfScene.scene);
+    //   console.log('Position:', gltfScene.scene.position);
+    //   console.log('Scale:', gltfScene.scene.scale);
+    // });
+
+    const gltfLoader = new GLTFLoader();
+    this.flowerModel = null;
+    gltfLoader.load('/flowers/scene.gltf', (gltf) => {
+      this.flowerModel = gltf.scene;
+      this.flowerModel.scale.set(0.1, 0.1, 0.1);
+      console.log('Modèle de fleur chargé');
+      this.spawnFlowers(200);// Exemple : générer 50 fleurs
+    });
+
+    
+
   }
 
   setupVegetation() {

@@ -554,8 +554,8 @@ export class VegetationManager {
   
     for (let i = 0; i < treeCount; i++) {
       // Offset très faible → arbres proches
-      const offsetX = (Math.random() - 0.5) * radius;
-      const offsetZ = (Math.random() - 0.5) * radius;
+      const offsetX = (Math.random() - 0.3) * radius;
+      const offsetZ = (Math.random() - 0.3) * radius;
       const angle = (Math.random()*Math.PI);
   
       const x = center.x + offsetX*Math.cos(angle);
